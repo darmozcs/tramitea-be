@@ -1,0 +1,8 @@
+jwt:
+  issuer: darmoz-auth
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

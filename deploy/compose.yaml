@@ -1,0 +1,19 @@
+name: tramitea-be
+
+# Sin labels de Traefik: la API no se publica en internet. Solo la consume el
+# front (contenedor `tramitea`) por la red `proxy`, como
+# http://tramitea-be:8080/tramitea-api.
+services:
+  tramitea-be:
+    image: ${APP_IMAGE:-ghcr.io/darmozcs/tramitea-be:latest}
+    container_name: tramitea-be
+    restart: unless-stopped
+    env_file: .env
+    mem_limit: 768m
+    networks: [proxy, data]
+
+networks:
+  proxy:
+    external: true
+  data:
+    external: true

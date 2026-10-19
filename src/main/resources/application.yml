@@ -1,0 +1,59 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /tramitea-api
+
+spring:
+  application:
+    name: tramitea-be
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/nexora}
+    username: ${SPRING_DATASOURCE_USERNAME:nexora}
+    password: ${SPRING_DATASOURCE_PASSWORD:nexora}
+    hikari:
+      # El Postgres compartido tiene max_connections=100 y los otros 6
+      # backends ya ocupan 10 cada uno (default de Hikari). Con 5 alcanza
+      # para el tráfico de Tramitea.
+      maximum-pool-size: ${DB_POOL_SIZE:5}
+      minimum-idle: 1
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        # El listado devuelve trámites completos (requisitos, pasos, FAQs):
+        # carga las colecciones en lotes en vez de una query por trámite.
+        default_batch_fetch_size: 50
+
+  jackson:
+    # Los campos opcionales del contrato del front (`notes?`, `cost?`...)
+    # se omiten en vez de viajar como null.
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    table: tr_flyway_schema_history
+    baseline-on-migrate: true
+    baseline-version: 0
+
+auth:
+  # Mismo AUTH_SECRET que el front (tramitea). Minimo 32 caracteres; el
+  # default es solo para desarrollo local y coincide con el fallback del front.
+  secret: ${AUTH_SECRET:tramitea-local-development-secret-do-not-use-in-production}
+  ttl-seconds: ${AUTH_TOKEN_TTL_SECONDS:1800}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+logging:
+  level:
+    com.darmoz.tramitea: INFO
