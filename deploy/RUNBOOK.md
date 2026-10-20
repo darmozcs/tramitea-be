@@ -23,7 +23,7 @@ guardias-sa-be:
    ```bash
    cd ~/actions-runner-tramitea-be && sudo ./svc.sh install darmoz && sudo ./svc.sh start
    ```
-5. `git push` a `main` → CI: test → build & push a GHCR → deploy.
+5. `git push` a `desa` → CI: test → build & push a GHCR → deploy.
 6. Si `docker compose pull` da `denied`: hacer público el paquete en
    `github.com/darmozcs?tab=packages` → `tramitea-be` → Package settings → Public.
 7. Verificar desde adentro del contenedor (no hay ruta pública):
