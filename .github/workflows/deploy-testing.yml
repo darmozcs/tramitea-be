@@ -1,7 +1,9 @@
-name: Deploy tramitea-be
+name: Deploy tramitea-be (testing)
 
 on:
-  push: { branches: [desa] }
+  # Testing = server de Darmoz. Producción (Railway) deploya sola desde main
+  # con su integración de GitHub (ver railway.json y deploy/RUNBOOK.md).
+  push: { branches: [develop] }
   workflow_dispatch: {}
 
 env:

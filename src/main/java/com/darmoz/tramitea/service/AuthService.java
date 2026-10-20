@@ -1,5 +1,6 @@
 package com.darmoz.tramitea.service;
 
+import com.darmoz.tramitea.config.AuthMode;
 import com.darmoz.tramitea.dto.request.Requests;
 import com.darmoz.tramitea.dto.response.AuthResponse;
 import com.darmoz.tramitea.entity.CitizenUser;
@@ -10,6 +11,7 @@ import com.darmoz.tramitea.repository.CitizenUserRepository;
 import com.darmoz.tramitea.security.AuthenticatedUser;
 import com.darmoz.tramitea.security.SessionTokenService;
 import com.darmoz.tramitea.util.TextNormalizer;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,7 @@ import java.util.regex.Pattern;
  * front renueva con /auth/refresh); el logout es borrar la cookie en el front.
  */
 @Service
+@ConditionalOnProperty(name = AuthMode.PROPERTY, havingValue = AuthMode.LOCAL, matchIfMissing = true)
 public class AuthService {
 
     public static final int PASSWORD_MIN_LENGTH = 8;

@@ -10,10 +10,33 @@ Flyway · JWT HS256 propio.
 
 ## Autenticación
 
-Por ahora Tramitea **no usa darmoz-auth**: tramitea-be guarda las cuentas
-(`tr_users`, password con BCrypt) y emite el token de sesión, un JWT HS256 de
-30 minutos firmado con `AUTH_SECRET`. Es el mismo formato que verifica el
-middleware del front (`iss=tramitea`, `aud=tramitea-web`, `sub` y los claims
+Hay dos modos, que se eligen con `AUTH_MODE`. El código es el mismo en las
+dos ramas; cambia solo la configuración de cada ambiente:
+
+| Modo | Ambiente | Cuentas | Token |
+|---|---|---|---|
+| `local` (default) | Producción (Railway) | `tr_users` con password BCrypt | JWT HS256 de 30 min que emite este servicio con `AUTH_SECRET` |
+| `darmoz` | Testing (server de Darmoz) | darmoz-auth (Application "Tramitea") | Access JWT RS256 de darmoz-auth; acá solo se verifica |
+
+**Modo `darmoz`:**
+- Se verifica la firma con la llave pública de darmoz-auth
+  (`DARMOZ_AUTH_PUBLIC_KEY_PATH`), `iss=darmoz-auth` y que el claim
+  `applicationId` sea `DARMOZ_AUTH_APPLICATION_ID`.
+- Los endpoints `/auth/*` de este servicio no existen (404): registro, login,
+  refresh y verificación de email los hace el front contra darmoz-auth.
+- **Relación con darmoz-auth: `tr_users.id_auth_user`** guarda el `id` de
+  `auth_users` (el `sub` del token).
+  - `tr_users.id` sigue siendo el id propio de Tramitea, al que apuntan
+    tareas, votos y comentarios.
+  - El primer request de un usuario crea su fila, o vincula una existente con
+    el mismo email.
+  - Es una relación lógica, sin FK: en producción `auth_users` no existe en
+    esta base.
+- El email lo administra darmoz-auth: se sincroniza desde el token, y el que
+  llegue en `PATCH /user/profile` se ignora.
+
+**Modo `local`:** el token usa el mismo formato que verifica el middleware
+del front (`iss=tramitea`, `aud=tramitea-web`, `sub` y los claims
 `firstName`, `lastName` y `email`), así que front y backend comparten el
 mismo `AUTH_SECRET`.
 
@@ -21,7 +44,7 @@ mismo `AUTH_SECRET`.
   esta API **solo desde su servidor** (route handlers), reenviando
   `Authorization: Bearer`. El navegador nunca llama directo a esta API, por
   eso no hay CORS.
-- La sesión es *sliding*: el front llama a `POST /auth/refresh` cada 5
+- (Modo local) La sesión es *sliding*: el front llama a `POST /auth/refresh` cada 5
   minutos. El logout consiste en borrar la cookie (la sesión no tiene estado
   en el servidor).
 - Borrar la cuenta elimina la fila de `tr_users`. Los tokens que todavía no
@@ -34,9 +57,9 @@ No tiene router en Traefik.
 
 | Método | Ruta | Auth | Notas |
 |---|---|---|---|
-| POST | `/auth/register` | — | `{firstName, lastName, email, password}` (password de 8 a 72 caracteres) → `201 {user, token, expiresIn}`. `409 email-already-registered`, `400 invalid-payload` |
-| POST | `/auth/sign-in` | — | `{email, password}` → `{user, token, expiresIn}`. `401 invalid-credentials` |
-| POST | `/auth/refresh` | sí | Token nuevo con los datos actuales del usuario |
+| POST | `/auth/register` (solo modo local) | — | `{firstName, lastName, email, password}` (password de 8 a 72 caracteres) → `201 {user, token, expiresIn}`. `409 email-already-registered`, `400 invalid-payload` |
+| POST | `/auth/sign-in` (solo modo local) | — | `{email, password}` → `{user, token, expiresIn}`. `401 invalid-credentials` |
+| POST | `/auth/refresh` (solo modo local) | sí | Token nuevo con los datos actuales del usuario |
 | GET | `/procedures` | — | Filtros: `searchTerm`, `categoryIds`, `institutionIds`, `groups`, `methods` (listas separadas por coma), `isFreeOnly`, `sortBy` (`RELEVANCE`, `MOST_VIEWED`, `PRICE_ASC`, `RECENTLY_UPDATED`), `page` (1-based), `pageSize` (máx. 100). Devuelve `PaginatedResponse<Procedure>` |
 | GET | `/procedures?ids=a,b` | — | `Procedure[]`; los ids inexistentes se omiten |
 | GET | `/procedures/popular?limit=N` | — | Por `viewCount` desc (máx. 50) |

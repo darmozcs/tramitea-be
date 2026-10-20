@@ -1,5 +1,6 @@
 package com.darmoz.tramitea.security;
 
+import com.darmoz.tramitea.exception.UnauthorizedException;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -14,8 +15,8 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * Autentica requests a partir del token de sesion (Authorization: Bearer ...)
- * que emite este mismo servicio (ver {@link SessionTokenService}). El front lo
+ * Autentica requests a partir del Bearer (Authorization: Bearer ...): el token
+ * propio o el de darmoz-auth, según auth.mode (ver {@link TokenVerifier}). El front lo
  * guarda en una cookie httpOnly y lo reenvia desde sus route handlers. No
  * rechaza requests con token ausente/invalido: solo deja el SecurityContext
  * vacio y es authorizeHttpRequests() el que decide si la ruta requiere
@@ -25,10 +26,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final String BEARER_PREFIX = "Bearer ";
 
-    private final SessionTokenService sessionTokenService;
+    private final TokenVerifier tokenVerifier;
 
-    public JwtAuthenticationFilter(SessionTokenService sessionTokenService) {
-        this.sessionTokenService = sessionTokenService;
+    public JwtAuthenticationFilter(TokenVerifier tokenVerifier) {
+        this.tokenVerifier = tokenVerifier;
     }
 
     @Override
@@ -38,10 +39,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (token != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             try {
-                AuthenticatedUser principal = sessionTokenService.verify(token);
+                AuthenticatedUser principal = tokenVerifier.verify(token);
                 var authentication = new UsernamePasswordAuthenticationToken(principal, null, List.of());
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-            } catch (JwtException | IllegalArgumentException ignored) {
+            } catch (JwtException | IllegalArgumentException | UnauthorizedException ignored) {
                 // token invalido/expirado/malformado (o sub que no es UUID): se sigue sin autenticacion
             }
         }

@@ -43,10 +43,23 @@ spring:
     baseline-version: 0
 
 auth:
-  # Mismo AUTH_SECRET que el front (tramitea). Minimo 32 caracteres; el
-  # default es solo para desarrollo local y coincide con el fallback del front.
+  # local (default, producción): cuentas propias + JWT HS256 que emite este
+  # servicio. darmoz (testing): las cuentas viven en darmoz-auth y acá solo se
+  # verifican sus tokens RS256 (bloque darmoz-auth de abajo). Ver AuthMode.
+  mode: ${AUTH_MODE:local}
+  # Solo modo local. Mismo AUTH_SECRET que el front (tramitea). Minimo 32
+  # caracteres; el default es solo para desarrollo y coincide con el del front.
   secret: ${AUTH_SECRET:tramitea-local-development-secret-do-not-use-in-production}
   ttl-seconds: ${AUTH_TOKEN_TTL_SECONDS:1800}
+
+# Solo modo darmoz.
+darmoz-auth:
+  # Llave pública RSA de darmoz-auth (en el server se monta de
+  # /opt/infra/services/darmoz-auth/keys/public_key.pem).
+  public-key-path: ${DARMOZ_AUTH_PUBLIC_KEY_PATH:}
+  issuer: ${DARMOZ_AUTH_ISSUER:darmoz-auth}
+  # UUID de la Application "Tramitea" en darmoz-auth (header API_ID del front).
+  application-id: ${DARMOZ_AUTH_APPLICATION_ID:}
 
 management:
   endpoints:

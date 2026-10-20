@@ -1,12 +1,13 @@
 package com.darmoz.tramitea.security;
 
+import com.darmoz.tramitea.config.AuthMode;
 import com.darmoz.tramitea.config.SessionTokenProperties;
 import com.darmoz.tramitea.entity.CitizenUser;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -18,11 +19,11 @@ import java.util.UUID;
 /**
  * Emite y verifica los tokens de sesion (JWT HS256). Mismo formato que
  * espera el middleware del front: sub = id, claims firstName/lastName/email,
- * iss=tramitea, aud=tramitea-web.
+ * iss=tramitea, aud=tramitea-web. Solo existe en modo local (ver AuthMode).
  */
 @Service
-@EnableConfigurationProperties(SessionTokenProperties.class)
-public class SessionTokenService {
+@ConditionalOnProperty(name = AuthMode.PROPERTY, havingValue = AuthMode.LOCAL, matchIfMissing = true)
+public class SessionTokenService implements TokenVerifier {
 
     private static final String CLAIM_EMAIL = "email";
     private static final String CLAIM_FIRST_NAME = "firstName";
@@ -61,6 +62,7 @@ public class SessionTokenService {
     }
 
     /** Valida firma, expiracion, issuer y audience. Lanza {@link JwtException} ante cualquier fallo. */
+    @Override
     public AuthenticatedUser verify(String token) {
         Claims claims = Jwts.parser()
                 .verifyWith(key)

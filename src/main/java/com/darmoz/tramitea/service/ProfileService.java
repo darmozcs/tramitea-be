@@ -1,5 +1,6 @@
 package com.darmoz.tramitea.service;
 
+import com.darmoz.tramitea.config.AuthMode;
 import com.darmoz.tramitea.dto.NotificationPreferencesDto;
 import com.darmoz.tramitea.dto.request.Requests;
 import com.darmoz.tramitea.dto.response.CitizenProfileResponse;
@@ -12,6 +13,7 @@ import com.darmoz.tramitea.repository.SavedTaskRepository;
 import com.darmoz.tramitea.repository.VoteRepository;
 import com.darmoz.tramitea.security.AuthenticatedUser;
 import com.darmoz.tramitea.util.TextNormalizer;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,15 +25,18 @@ public class ProfileService {
     private final CommunityCommentRepository commentRepository;
     private final SavedTaskRepository savedTaskRepository;
     private final VoteRepository voteRepository;
+    private final boolean externalAuth;
 
     public ProfileService(CitizenUserService citizenUserService, CitizenUserRepository citizenUserRepository,
                           CommunityCommentRepository commentRepository, SavedTaskRepository savedTaskRepository,
-                          VoteRepository voteRepository) {
+                          VoteRepository voteRepository,
+                          @Value("${" + AuthMode.PROPERTY + ":" + AuthMode.LOCAL + "}") String authMode) {
         this.citizenUserService = citizenUserService;
         this.citizenUserRepository = citizenUserRepository;
         this.commentRepository = commentRepository;
         this.savedTaskRepository = savedTaskRepository;
         this.voteRepository = voteRepository;
+        this.externalAuth = AuthMode.DARMOZ.equals(authMode);
     }
 
     @Transactional
@@ -40,15 +45,21 @@ public class ProfileService {
     }
 
     /**
-     * El email tambien es el de login: si cambia, tiene que seguir siendo
-     * unico. El front pide un /auth/refresh despues para que la cookie lleve
-     * el nombre y el email nuevos.
+     * El email tambien es el de login.
+     * <ul>
+     *   <li>Modo local: si cambia, tiene que seguir siendo unico. El front pide
+     *   un /auth/refresh despues para que la cookie lleve el nombre y el email nuevos.</li>
+     *   <li>Modo darmoz: el email lo administra darmoz-auth y se sincroniza desde su
+     *   token, asi que el del payload se ignora.</li>
+     * </ul>
      */
     @Transactional
     public CitizenProfileResponse update(Requests.UpdateProfile payload, AuthenticatedUser user) {
+        CitizenUser citizen = citizenUserService.getCurrent(user);
+
         String firstName = TextNormalizer.trimToNull(payload.firstName());
         String lastName = TextNormalizer.trimToNull(payload.lastName());
-        String email = AuthService.normalizeEmail(payload.email());
+        String email = externalAuth ? citizen.getEmail() : AuthService.normalizeEmail(payload.email());
         String phone = TextNormalizer.trimToNull(payload.phone());
         String locality = TextNormalizer.trimToNull(payload.locality());
 
@@ -61,7 +72,6 @@ public class ProfileService {
             throw new ValidationException(ValidationException.INVALID_PROFILE_PAYLOAD, "Perfil invalido");
         }
 
-        CitizenUser citizen = citizenUserService.getCurrent(user);
         if (!email.equals(citizen.getEmail()) && citizenUserRepository.existsByEmail(email)) {
             throw AuthService.emailTaken();
         }

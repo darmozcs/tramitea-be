@@ -10,6 +10,10 @@ services:
     restart: unless-stopped
     env_file: .env
     mem_limit: 768m
+    volumes:
+      # Llave pública de darmoz-auth (solo se usa con AUTH_MODE=darmoz). No es
+      # secreta; se monta de la carpeta de darmoz-auth para no duplicarla.
+      - ../darmoz-auth/keys/public_key.pem:/app/keys/darmoz_public_key.pem:ro
     networks: [proxy, data]
 
 networks:

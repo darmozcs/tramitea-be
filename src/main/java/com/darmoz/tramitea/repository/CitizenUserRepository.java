@@ -11,5 +11,7 @@ public interface CitizenUserRepository extends JpaRepository<CitizenUser, UUID> 
 
     Optional<CitizenUser> findByEmail(String email);
 
+    Optional<CitizenUser> findByIdAuthUser(UUID idAuthUser);
+
     boolean existsByEmail(String email);
 }

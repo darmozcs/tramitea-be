@@ -8,7 +8,15 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
 
-/** Cuenta y perfil ciudadano. El id es el sub del token de sesion. */
+/**
+ * Perfil ciudadano de Tramitea. {@code id} es el id propio (al que apuntan
+ * tareas, votos y comentarios). Según el modo de auth:
+ * <ul>
+ *   <li>local: también es la cuenta de login (password BCrypt) y el sub del token.</li>
+ *   <li>darmoz: la cuenta vive en darmoz-auth; {@code idAuthUser} guarda el id de
+ *   auth_users (sub de su token) y {@code passwordHash} queda null.</li>
+ * </ul>
+ */
 @Entity
 @Table(name = "tr_users")
 public class CitizenUser {
@@ -16,11 +24,16 @@ public class CitizenUser {
     @Id
     private UUID id;
 
+    /** Id del usuario en darmoz-auth (auth_users.id). Null en modo local. Relación lógica, sin FK. */
+    @Column(name = "id_auth_user")
+    private UUID idAuthUser;
+
     /** Siempre en minusculas: es el identificador de login. */
     @Column(nullable = false)
     private String email;
 
-    @Column(name = "password_hash", nullable = false)
+    /** Null en las cuentas de darmoz-auth. */
+    @Column(name = "password_hash")
     private String passwordHash;
 
     @Column(name = "first_name", nullable = false)
@@ -69,6 +82,25 @@ public class CitizenUser {
         this.updatedAt = this.createdAt;
     }
 
+    /** Perfil de un usuario de darmoz-auth visto por primera vez: sin password ni nombres. */
+    public static CitizenUser fromAuthUser(UUID idAuthUser, String email) {
+        CitizenUser user = new CitizenUser(email, null, "", "");
+        user.idAuthUser = idAuthUser;
+        return user;
+    }
+
+    /** Vincula un perfil existente (p. ej. una cuenta local con el mismo email) a darmoz-auth. */
+    public void linkAuthUser(UUID idAuthUser) {
+        this.idAuthUser = idAuthUser;
+        this.updatedAt = Instant.now();
+    }
+
+    /** El email de login lo administra darmoz-auth: se sincroniza desde su token. */
+    public void syncEmail(String email) {
+        this.email = email;
+        this.updatedAt = Instant.now();
+    }
+
     public void updatePersonalData(String firstName, String lastName, String email, String phone,
                                    UruguayDepartment department, String locality) {
         this.firstName = firstName;
@@ -94,6 +126,7 @@ public class CitizenUser {
     }
 
     public UUID getId() { return id; }
+    public UUID getIdAuthUser() { return idAuthUser; }
     public String getEmail() { return email; }
     public String getPasswordHash() { return passwordHash; }
     public String getFirstName() { return firstName; }
