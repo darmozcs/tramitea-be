@@ -52,8 +52,13 @@ mismo `AUTH_SECRET`.
 
 ## Endpoints
 
-Base (solo en la red Docker interna): `http://tramitea-be:8080/tramitea-api`.
-No tiene router en Traefik.
+Base:
+- Testing (Traefik, mismo dominio que el front): `https://darmozsc.duckdns.org/tramitea-api`.
+- Red Docker interna: `http://tramitea-be:8080/tramitea-api`.
+
+**Swagger UI**: `/tramitea-api/swagger-ui.html` · OpenAPI JSON: `/tramitea-api/v3/api-docs`.
+Se generan desde los controllers (springdoc, ver `OpenApiConfig`) y se apagan
+con `API_DOCS_ENABLED=false`. `mvn test` deja una copia en `target/openapi.json`.
 
 | Método | Ruta | Auth | Notas |
 |---|---|---|---|

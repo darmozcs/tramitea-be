@@ -16,9 +16,9 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
- * Sin CORS: el navegador nunca llama a esta API. El front (Next.js) la
- * consume desde sus route handlers por la red Docker interna, reenviando el
- * token de la cookie de sesion.
+ * Sin CORS: el front (Next.js) la consume desde sus route handlers por la red
+ * Docker interna y, en testing, Traefik la publica en el mismo dominio que el
+ * front (/tramitea-api), así que el navegador la llama same-origin.
  */
 @Configuration
 @EnableConfigurationProperties({SessionTokenProperties.class, DarmozAuthProperties.class})
@@ -32,6 +32,7 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         // Solo existen en modo local; en modo darmoz responden 404.
                         .requestMatchers(HttpMethod.POST, "/auth/register", "/auth/sign-in").permitAll()
                         // Catalogo, comunidad (lectura) y sugerencias: publicos.
