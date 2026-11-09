@@ -54,6 +54,10 @@ public class CitizenUser {
 
     private String locality;
 
+    /** Provincia o país del usuario (y del admin: administra ese país). Null hasta que la elija. */
+    @Column(name = "location_id")
+    private UUID locationId;
+
     @Column(name = "notify_document_expiry", nullable = false)
     private boolean notifyDocumentExpiry = true;
 
@@ -112,6 +116,11 @@ public class CitizenUser {
         this.updatedAt = Instant.now();
     }
 
+    public void changeLocation(UUID locationId) {
+        this.locationId = locationId;
+        this.updatedAt = Instant.now();
+    }
+
     public void updateNotificationPreferences(boolean documentExpiry, boolean appointmentReminders,
                                               boolean newsAndUpdates) {
         this.notifyDocumentExpiry = documentExpiry;
@@ -136,6 +145,7 @@ public class CitizenUser {
     public String getPhone() { return phone; }
     public UruguayDepartment getDepartment() { return department; }
     public String getLocality() { return locality; }
+    public UUID getLocationId() { return locationId; }
     public boolean isNotifyDocumentExpiry() { return notifyDocumentExpiry; }
     public boolean isNotifyAppointmentReminders() { return notifyAppointmentReminders; }
     public boolean isNotifyNewsAndUpdates() { return notifyNewsAndUpdates; }

@@ -108,21 +108,18 @@ class CommunityIT extends AbstractIntegrationTest {
     }
 
     @Test
-    void anonymousSuggestionIsAccepted() throws Exception {
+    void anonymousSuggestionIsRejected() {
         ResponseEntity<String> response = restTemplate.postForEntity("/procedures/suggestions",
                 json(Map.of("title", "Permiso de pesca", "institutionId", INSTITUTION_ID,
                         "details", "Falta este tramite"), null), String.class);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        JsonNode body = objectMapper.readTree(response.getBody());
-        assertThat(body.get("title").asText()).isEqualTo("Permiso de pesca");
-        assertThat(body.get("institutionId").asText()).isEqualTo(INSTITUTION_ID);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 
     @Test
     void suggestionWithUnknownInstitutionIsRejected() throws Exception {
         ResponseEntity<String> response = restTemplate.postForEntity("/procedures/suggestions",
-                json(Map.of("title", "X", "institutionId", UUID.randomUUID().toString(), "details", "Y"), null),
+                json(Map.of("title", "X", "institutionId", UUID.randomUUID().toString(), "details", "Y"), token),
                 String.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);

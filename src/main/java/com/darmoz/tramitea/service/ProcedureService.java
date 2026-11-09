@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -32,12 +33,14 @@ public class ProcedureService {
     private final ProcedureRepository procedureRepository;
     private final CategoryRepository categoryRepository;
     private final InstitutionRepository institutionRepository;
+    private final LocationService locationService;
 
     public ProcedureService(ProcedureRepository procedureRepository, CategoryRepository categoryRepository,
-                            InstitutionRepository institutionRepository) {
+                            InstitutionRepository institutionRepository, LocationService locationService) {
         this.procedureRepository = procedureRepository;
         this.categoryRepository = categoryRepository;
         this.institutionRepository = institutionRepository;
+        this.locationService = locationService;
     }
 
     /**
@@ -46,7 +49,9 @@ public class ProcedureService {
      */
     @Transactional(readOnly = true)
     public PaginatedResponse<ProcedureResponse> list(ProcedureFilters filters) {
-        Specification<Procedure> spec = toSpecification(filters);
+        Set<UUID> requested = isPresent(filters.locationIds())
+                ? locationService.expandFilter(filters.locationIds()) : null;
+        Specification<Procedure> spec = toSpecification(filters, locationService.visibleIds(), requested);
         int pageSize = Math.clamp(filters.pageSize(), 1, MAX_PAGE_SIZE);
 
         long total = procedureRepository.count(spec);
@@ -65,6 +70,7 @@ public class ProcedureService {
     @Transactional
     public ProcedureResponse getBySlug(String slug) {
         Procedure procedure = procedureRepository.findBySlug(slug)
+                .filter(p -> locationService.visibleIds().contains(p.getLocationId()))
                 .orElseThrow(() -> new NotFoundException("Tramite no encontrado"));
         procedureRepository.incrementViewCount(procedure.getId());
         return ProcedureResponse.from(procedure);
@@ -72,7 +78,8 @@ public class ProcedureService {
 
     @Transactional(readOnly = true)
     public List<ProcedureResponse> getPopular(int limit) {
-        return procedureRepository.findPopular(PageRequest.of(0, Math.clamp(limit, 1, MAX_POPULAR_LIMIT))).stream()
+        PageRequest top = PageRequest.of(0, Math.clamp(limit, 1, MAX_POPULAR_LIMIT));
+        return procedureRepository.findPopular(locationService.visibleIds(), top).stream()
                 .map(ProcedureResponse::from)
                 .toList();
     }
@@ -82,7 +89,9 @@ public class ProcedureService {
         if (ids.isEmpty()) {
             return List.of();
         }
-        return procedureRepository.findAll((root, query, cb) -> root.get("id").in(ids),
+        Set<UUID> visible = locationService.visibleIds();
+        return procedureRepository.findAll((root, query, cb) -> cb.and(
+                                root.get("id").in(ids), root.get("locationId").in(visible)),
                         Sort.by("displayOrder")).stream()
                 .map(ProcedureResponse::from)
                 .toList();
@@ -97,7 +106,9 @@ public class ProcedureService {
 
     @Transactional(readOnly = true)
     public List<InstitutionResponse> getInstitutions() {
+        Set<UUID> visible = locationService.visibleIds();
         return institutionRepository.findAll(Sort.by("acronym")).stream()
+                .filter(i -> visible.contains(i.getLocationId()))
                 .map(InstitutionResponse::from)
                 .toList();
     }
@@ -108,9 +119,18 @@ public class ProcedureService {
         }
     }
 
-    private static Specification<Procedure> toSpecification(ProcedureFilters filters) {
+    /**
+     * @param visible   ubicaciones habilitadas: nunca se listan trámites de otras.
+     * @param requested filtro `locationIds` ya expandido, o null si no se filtra.
+     */
+    private static Specification<Procedure> toSpecification(ProcedureFilters filters, Set<UUID> visible,
+                                                            Set<UUID> requested) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
+            predicates.add(root.get("locationId").in(visible));
+            if (requested != null) {
+                predicates.add(root.get("locationId").in(requested));
+            }
 
             String term = TextNormalizer.normalize(filters.searchTerm()).trim();
             if (!term.isEmpty()) {

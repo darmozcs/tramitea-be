@@ -10,6 +10,7 @@ public class ValidationException extends RuntimeException {
     public static final String INVALID_PROFILE_PAYLOAD = "invalid-profile-payload";
     public static final String INVALID_COMMENT_PAYLOAD = "invalid-comment-payload";
     public static final String INVALID_PAYLOAD = "invalid-payload";
+    public static final String LOCATION_REQUIRED = "location-required";
 
     private final String code;
 

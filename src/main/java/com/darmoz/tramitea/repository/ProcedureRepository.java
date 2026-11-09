@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -16,8 +17,8 @@ public interface ProcedureRepository extends JpaRepository<Procedure, UUID>, Jpa
     @Query("select p from Procedure p where p.slugEs = :slug or p.slugEn = :slug")
     Optional<Procedure> findBySlug(String slug);
 
-    @Query("select p from Procedure p order by p.viewCount desc, p.displayOrder asc")
-    List<Procedure> findPopular(Pageable pageable);
+    @Query("select p from Procedure p where p.locationId in :locationIds order by p.viewCount desc, p.displayOrder asc")
+    List<Procedure> findPopular(Collection<UUID> locationIds, Pageable pageable);
 
     /** Incremento atomico: no pisa visitas concurrentes como haria un read-modify-write. */
     @Modifying

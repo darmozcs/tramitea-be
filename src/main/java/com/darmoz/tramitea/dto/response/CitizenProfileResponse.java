@@ -9,12 +9,12 @@ import java.util.UUID;
 
 public record CitizenProfileResponse(UUID id, String firstName, String lastName, String email, String nationalId,
                                      boolean nationalIdVerified, String phone, UruguayDepartment department,
-                                     String locality, Instant memberSince,
+                                     String locality, UUID locationId, Instant memberSince,
                                      NotificationPreferencesDto notificationPreferences, Instant updatedAt) {
 
     public static CitizenProfileResponse from(CitizenUser u) {
         return new CitizenProfileResponse(u.getId(), u.getFirstName(), u.getLastName(), u.getEmail(),
                 u.getNationalId(), u.isNationalIdVerified(), u.getPhone(), u.getDepartment(), u.getLocality(),
-                u.getCreatedAt(), NotificationPreferencesDto.from(u), u.getUpdatedAt());
+                u.getLocationId(), u.getCreatedAt(), NotificationPreferencesDto.from(u), u.getUpdatedAt());
     }
 }
