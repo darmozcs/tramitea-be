@@ -37,11 +37,15 @@ public class OpenApiConfig {
                         .description("""
                                 Backend de Tramitea: catálogo de trámites, comunidad, perfil y tareas guardadas.
 
+                                Ubicaciones: cada trámite, institución, usuario y sugerencia tiene `locationId` \
+                                (un país o una provincia, ver `GET /locations`). Solo se devuelven trámites de \
+                                ubicaciones habilitadas.
+
                                 Autenticación: header `Authorization: Bearer <token>` en los endpoints con candado. \
                                 %s
 
                                 Errores: `{ timestamp, status, error, message }`; `error` lleva un código estable \
-                                (`invalid-profile-payload`, `email-already-registered`...) cuando lo hay. Fechas \
+                                (`invalid-profile-payload`, `email-already-registered`, `location-required`, `location-not-allowed`...) cuando lo hay. Fechas \
                                 ISO-8601 en UTC; los campos null se omiten.""".formatted(tokenSource)))
                 // Relativo: Swagger UI lo resuelve contra el host desde el que se abre (Traefik, Railway, local).
                 .servers(List.of(new Server().url("/tramitea-api")))

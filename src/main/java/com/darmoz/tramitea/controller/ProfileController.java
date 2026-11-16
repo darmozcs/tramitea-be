@@ -36,7 +36,7 @@ public class ProfileController {
     }
 
     @PatchMapping
-    @Operation(summary = "Editar mi perfil", description = "`firstName` y `lastName` obligatorios (hasta 100). Con AUTH_MODE=darmoz el `email` se ignora: manda el de darmoz-auth. `department` es el código de dos letras (`MO`).")
+    @Operation(summary = "Editar mi perfil", description = "`firstName` y `lastName` obligatorios (hasta 100). Con AUTH_MODE=darmoz el `email` se ignora: manda el de darmoz-auth. `department` es el código de dos letras (`MO`). `locationId` (de `GET /locations`) es la ubicación del usuario: provincia o país visible; sin ella no puede sugerir trámites. Null la deja como estaba; inexistente o no visible → 400 `invalid-profile-payload`.")
     public CitizenProfileResponse update(@RequestBody Requests.UpdateProfile payload,
                                          @AuthenticationPrincipal AuthenticatedUser user) {
         return profileService.update(payload, user);

@@ -43,7 +43,7 @@ public class ProcedureController {
 
     // GET /procedures y GET /procedures?ids= comparten path: springdoc los junta en una operación.
     private static final String LIST_SUMMARY = "Listar trámites";
-    private static final String LIST_DESCRIPTION = "Paginado y con filtros. Las listas van separadas por coma (`?groups=IDENTITY,HEALTH`). `page` empieza en 1; `pageSize` de 1 a 100. Con `?ids=a,b` devuelve en cambio un array con esos trámites, sin paginar, e ignora los demás filtros.";
+    private static final String LIST_DESCRIPTION = "Paginado y con filtros. Las listas van separadas por coma (`?groups=IDENTITY,HEALTH`). `page` empieza en 1; `pageSize` de 1 a 100. Con `?ids=a,b` devuelve en cambio un array con esos trámites, sin paginar, e ignora los demás filtros. Solo devuelve trámites de ubicaciones habilitadas. `locationIds`: un país incluye sus provincias y una provincia incluye los trámites nacionales de su país.";
 
     private final ProcedureService procedureService;
     private final CommunityService communityService;
@@ -63,14 +63,15 @@ public class ProcedureController {
             @RequestParam(required = false) String searchTerm,
             @RequestParam(required = false) List<UUID> categoryIds,
             @RequestParam(required = false) List<UUID> institutionIds,
+            @RequestParam(required = false) List<UUID> locationIds,
             @RequestParam(required = false) List<ProcedureGroup> groups,
             @RequestParam(required = false) List<ApplicationMethod> methods,
             @RequestParam(defaultValue = "false") boolean isFreeOnly,
             @RequestParam(defaultValue = "RELEVANCE") ProcedureSortBy sortBy,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "12") int pageSize) {
-        return procedureService.list(new ProcedureFilters(searchTerm, categoryIds, institutionIds, groups, methods,
-                isFreeOnly, sortBy, page, pageSize));
+        return procedureService.list(new ProcedureFilters(searchTerm, categoryIds, institutionIds, locationIds, groups,
+                methods, isFreeOnly, sortBy, page, pageSize));
     }
 
     @GetMapping(params = "ids")
@@ -105,7 +106,7 @@ public class ProcedureController {
 
     @PostMapping("/suggestions")
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Sugerir un trámite", description = "El token es opcional: sin token la sugerencia es anónima. `title` hasta 255, `details` hasta 5000, `institutionId` tiene que existir.")
+    @Operation(summary = "Sugerir un trámite", description = "Requiere login y que el usuario tenga ubicación (si no, 400 `location-required`). `locationId` opcional: por defecto la del usuario; puede ser su provincia o su país (trámite nacional), si no 403 `location-not-allowed`. `title` hasta 255, `details` hasta 5000, `institutionId` tiene que existir.")
     public SuggestionResponse suggest(@RequestBody Requests.SuggestProcedure payload,
                                       @AuthenticationPrincipal AuthenticatedUser user) {
         return suggestionService.suggest(payload, user);

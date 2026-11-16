@@ -28,8 +28,12 @@ public final class Requests {
     public record SubmitVote(@NotNull VoteValue value) {
     }
 
-    /** Validado a mano en el servicio para responder el codigo `invalid-suggestion-payload` del front. */
-    public record SuggestProcedure(String title, UUID institutionId, String details, String contactEmail) {
+    /**
+     * Validado a mano en el servicio para responder el codigo `invalid-suggestion-payload` del front.
+     * `locationId` opcional: por defecto, la ubicacion del usuario.
+     */
+    public record SuggestProcedure(String title, UUID institutionId, String details, String contactEmail,
+                                   UUID locationId) {
     }
 
     public record SaveTask(@NotNull UUID procedureId) {
@@ -41,8 +45,11 @@ public final class Requests {
     public record UpdateTaskNotes(@NotNull @Size(max = 2000) String notes) {
     }
 
-    /** Validado a mano en el servicio para responder el codigo `invalid-profile-payload` del front. */
+    /**
+     * Validado a mano en el servicio para responder el codigo `invalid-profile-payload` del front.
+     * `locationId` null deja la ubicacion como estaba.
+     */
     public record UpdateProfile(String firstName, String lastName, String email, String phone,
-                                UruguayDepartment department, String locality) {
+                                UruguayDepartment department, String locality, UUID locationId) {
     }
 }

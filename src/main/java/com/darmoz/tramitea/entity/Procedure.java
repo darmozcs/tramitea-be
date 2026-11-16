@@ -56,6 +56,10 @@ public class Procedure {
     @Column(name = "institution_id", nullable = false)
     private UUID institutionId;
 
+    /** País (trámite nacional) o provincia. */
+    @Column(name = "location_id", nullable = false)
+    private UUID locationId;
+
     @Column(name = "appointment_required", nullable = false)
     private boolean appointmentRequired;
 
@@ -126,6 +130,7 @@ public class Procedure {
     public String getImageUrl() { return imageUrl; }
     public UUID getCategoryId() { return categoryId; }
     public UUID getInstitutionId() { return institutionId; }
+    public UUID getLocationId() { return locationId; }
     public boolean isAppointmentRequired() { return appointmentRequired; }
     public boolean isFree() { return free; }
     public BigDecimal getCostAmount() { return costAmount; }

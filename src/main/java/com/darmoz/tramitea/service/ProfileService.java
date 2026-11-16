@@ -25,17 +25,19 @@ public class ProfileService {
     private final CommunityCommentRepository commentRepository;
     private final SavedTaskRepository savedTaskRepository;
     private final VoteRepository voteRepository;
+    private final LocationService locationService;
     private final boolean externalAuth;
 
     public ProfileService(CitizenUserService citizenUserService, CitizenUserRepository citizenUserRepository,
                           CommunityCommentRepository commentRepository, SavedTaskRepository savedTaskRepository,
-                          VoteRepository voteRepository,
+                          VoteRepository voteRepository, LocationService locationService,
                           @Value("${" + AuthMode.PROPERTY + ":" + AuthMode.LOCAL + "}") String authMode) {
         this.citizenUserService = citizenUserService;
         this.citizenUserRepository = citizenUserRepository;
         this.commentRepository = commentRepository;
         this.savedTaskRepository = savedTaskRepository;
         this.voteRepository = voteRepository;
+        this.locationService = locationService;
         this.externalAuth = AuthMode.DARMOZ.equals(authMode);
     }
 
@@ -52,6 +54,7 @@ public class ProfileService {
      *   <li>Modo darmoz: el email lo administra darmoz-auth y se sincroniza desde su
      *   token, asi que el del payload se ignora.</li>
      * </ul>
+     * `locationId` tiene que ser una ubicacion habilitada; null la deja como estaba.
      */
     @Transactional
     public CitizenProfileResponse update(Requests.UpdateProfile payload, AuthenticatedUser user) {
@@ -67,7 +70,8 @@ public class ProfileService {
                 && lastName != null && lastName.length() <= 100
                 && AuthService.isValidEmail(email)
                 && (phone == null || phone.length() <= 50)
-                && (locality == null || locality.length() <= 100);
+                && (locality == null || locality.length() <= 100)
+                && (payload.locationId() == null || locationService.findVisible(payload.locationId()) != null);
         if (!valid) {
             throw new ValidationException(ValidationException.INVALID_PROFILE_PAYLOAD, "Perfil invalido");
         }
@@ -76,6 +80,9 @@ public class ProfileService {
             throw AuthService.emailTaken();
         }
         citizen.updatePersonalData(firstName, lastName, email, phone, payload.department(), locality);
+        if (payload.locationId() != null) {
+            citizen.changeLocation(payload.locationId());
+        }
         commentRepository.renameAuthor(citizen.getId(), citizen.getDisplayName());
         return CitizenProfileResponse.from(citizen);
     }

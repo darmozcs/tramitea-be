@@ -25,6 +25,7 @@ public record ProcedureResponse(
         String imageUrl,
         UUID categoryId,
         UUID institutionId,
+        UUID locationId,
         boolean appointmentRequired,
         boolean isFree,
         Cost cost,
@@ -46,7 +47,7 @@ public record ProcedureResponse(
 
         return new ProcedureResponse(
                 p.getId(), p.getName(), p.getApplicationMethod(), p.getAuthenticationLevel(), p.getGroup(),
-                p.getDescription(), p.getImageUrl(), p.getCategoryId(), p.getInstitutionId(),
+                p.getDescription(), p.getImageUrl(), p.getCategoryId(), p.getInstitutionId(), p.getLocationId(),
                 p.isAppointmentRequired(), p.isFree(), cost, validity, p.getEstimatedDeliveryTime(),
                 p.getViewCount(), new LocalizedValue(p.getSlugEs(), p.getSlugEn()),
                 p.getRequirements().stream().map(r -> RequirementResponse.from(p.getId(), r)).toList(),

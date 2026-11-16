@@ -36,6 +36,9 @@ public class Institution {
     @Column(name = "logo_url")
     private String logoUrl;
 
+    @Column(name = "location_id", nullable = false)
+    private UUID locationId;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
@@ -53,6 +56,7 @@ public class Institution {
     public String getContactPhone() { return contactPhone; }
     public String getContactEmail() { return contactEmail; }
     public String getLogoUrl() { return logoUrl; }
+    public UUID getLocationId() { return locationId; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
 }

@@ -27,6 +27,7 @@ class OpenApiIT extends AbstractIntegrationTest {
         JsonNode paths = body(response).get("paths");
         assertThat(paths.has("/procedures/{slug}")).isTrue();
         assertThat(paths.has("/user/saved-tasks/{taskId}/notes")).isTrue();
+        assertThat(paths.has("/locations")).isTrue();
         assertThat(body(response).get("servers").get(0).get("url").asText()).isEqualTo("/tramitea-api");
     }
 

@@ -35,9 +35,9 @@ public class SecurityConfig {
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         // Solo existen en modo local; en modo darmoz responden 404.
                         .requestMatchers(HttpMethod.POST, "/auth/register", "/auth/sign-in").permitAll()
-                        // Catalogo, comunidad (lectura) y sugerencias: publicos.
+                        // Catalogo, comunidad y ubicaciones (lectura): publicos. Sugerir requiere login.
                         .requestMatchers(HttpMethod.GET, "/procedures", "/procedures/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/procedures/suggestions").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/locations").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(new JwtAuthenticationFilter(tokenVerifier),
                         UsernamePasswordAuthenticationFilter.class)
