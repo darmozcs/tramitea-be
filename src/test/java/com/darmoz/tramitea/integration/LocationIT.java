@@ -31,7 +31,8 @@ class LocationIT extends AbstractIntegrationTest {
         JsonNode locations = body(call(HttpMethod.GET, "/locations", null, null));
 
         assertThat(locations).hasSize(20);
-        assertThat(codes(locations)).contains("UY", "UY-MO", "UY-TT").doesNotContain("BR", "BR-SP", "ES", "ES-M");
+        assertThat(codes(locations)).contains("UY", "UY-MO", "UY-TT")
+                .doesNotContain("BR", "BR-SP", "ES", "ES-M", "GLOBAL");
         JsonNode montevideo = find(locations, "UY-MO");
         assertThat(montevideo.get("type").asText()).isEqualTo("PROVINCE");
         assertThat(montevideo.get("parentId").asText()).isEqualTo(locationId("UY").toString());
@@ -101,6 +102,11 @@ class LocationIT extends AbstractIntegrationTest {
         ResponseEntity<String> disabled = call(HttpMethod.PATCH, "/user/profile",
                 profilePayload(token, locationId("BR-SP")), token);
         assertThat(disabled.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+
+        // GLOBAL es solo alcance de admin: un ciudadano no la puede elegir.
+        ResponseEntity<String> global = call(HttpMethod.PATCH, "/user/profile",
+                profilePayload(token, locationId("GLOBAL")), token);
+        assertThat(global.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
 
         JsonNode kept = body(call(HttpMethod.PATCH, "/user/profile", profilePayload(token, null), token));
         assertThat(kept.get("locationId").asText()).isEqualTo(locationId("UY-SA").toString());

@@ -12,7 +12,8 @@ import java.util.UUID;
 /**
  * País o provincia (V4__locations.sql). Solo dos niveles: las provincias
  * apuntan a su país con {@code parentId}. Se carga por migraciones; la API
- * pública solo la lee.
+ * pública solo la lee. También existe una GLOBAL (V5__global_location.sql),
+ * que solo da alcance a los admins y la API pública nunca muestra.
  */
 @Entity
 @Table(name = "tr_locations")

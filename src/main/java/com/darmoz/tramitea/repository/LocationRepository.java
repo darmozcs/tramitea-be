@@ -10,10 +10,14 @@ import java.util.UUID;
 
 public interface LocationRepository extends JpaRepository<Location, UUID> {
 
-    /** Activas y, si son provincias, con el país también activo. */
+    /**
+     * Activas y, si son provincias, con el país también activo. GLOBAL nunca:
+     * es solo el alcance de los admins (V5__global_location.sql).
+     */
     @Query("""
             select l from Location l
             where l.active = true
+              and l.type <> com.darmoz.tramitea.entity.LocationType.GLOBAL
               and (l.parentId is null
                    or l.parentId in (select c.id from Location c where c.active = true))
             order by l.name""")
